@@ -10,18 +10,23 @@ const TEMPLATES_DIR = path.join(__dirname, "../..");
 const TEMP_DIR = path.join(__dirname, "../../temp");
 if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true });
 
+// Koordinatalar
+const NAME_X = 843, NAME_Y = 574;
+const TOPIC_X = 843, TOPIC_Y = 660;
+const DATE_X = 560, DATE_Y = 1070;
 const NAME_SIZE = 40, TOPIC_SIZE = 34, DATE_SIZE = 37;
 const NAME_COLOR = "#4a0080", TOPIC_COLOR = "#4a0080", DATE_COLOR = "#333333";
+const MAX_TEXT_WIDTH = 900;
 
 const COUNTRIES = [
-  { label: "🇨🇦 Canada",  file: "Canada certificate.pdf",  nameY: 0.42, topicY: 0.52, dateX: 0.78, dateY: 0.88 },
-  { label: "🇩🇰 Denmark",  file: "Denmark certificate.pdf", nameY: 0.42, topicY: 0.52, dateX: 0.33, dateY: 0.88 },
-  { label: "🏴󠁧󠁢󠁥󠁮󠁧󠁿 England",  file: "England certificate.pdf", nameY: 0.42, topicY: 0.52, dateX: 0.40, dateY: 0.88 },
-  { label: "🇫🇷 France",   file: "France certificate.pdf",  nameY: 0.42, topicY: 0.52, dateX: 0.33, dateY: 0.88 },
-  { label: "🇮🇹 Italy",    file: "Italy certificate.pdf",   nameY: 0.42, topicY: 0.52, dateX: 0.33, dateY: 0.88 },
-  { label: "🇷🇺 Russia",   file: "Russia certificate.pdf",  nameY: 0.42, topicY: 0.52, dateX: 0.33, dateY: 0.88 },
-  { label: "🇹🇷 Turkey",   file: "Turkey certificate.pdf",  nameY: 0.42, topicY: 0.52, dateX: 0.33, dateY: 0.88 },
-  { label: "🇺🇸 USA",      file: "usa certificate.pdf",     nameY: 0.42, topicY: 0.52, dateX: 0.33, dateY: 0.88 },
+  { label: "🇨🇦 Canada",  file: "Canada certificate.pdf",  dateX: 1492, dateY: 980  },
+  { label: "🇩🇰 Denmark",  file: "Denmark certificate.pdf", dateX: 560,  dateY: 1040 },
+  { label: "🏴󠁧󠁢󠁥󠁮󠁧󠁿 England",  file: "England certificate.pdf", dateX: 770,  dateY: 1010 },
+  { label: "🇫🇷 France",   file: "France certificate.pdf"  },
+  { label: "🇮🇹 Italy",    file: "Italy certificate.pdf"   },
+  { label: "🇷🇺 Russia",   file: "Russia certificate.pdf"  },
+  { label: "🇹🇷 Turkey",   file: "Turkey certificate.pdf"  },
+  { label: "🇺🇸 USA",      file: "usa certificate.pdf"     },
 ];
 
 async function getArticleInfo(url) {
@@ -133,29 +138,20 @@ async function generateCertificate(author, title, date, country) {
     const templatePath = path.join(TEMPLATES_DIR, country.file);
     const { canvas, ctx, W, H } = await loadPdfTemplate(templatePath);
 
-    console.log(`Canvas: ${W}x${H}, country: ${country.label}`);
-
-    const CX = W / 2;
-    const maxWidth = W * 0.65;
-
-    // ISM
     ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
+    ctx.textBaseline = "top";
     ctx.font = `bold ${NAME_SIZE}px Arial`;
     ctx.fillStyle = NAME_COLOR;
-    ctx.fillText(author.toUpperCase(), CX, H * (country.nameY || 0.42));
+    ctx.fillText(author.toUpperCase(), NAME_X, NAME_Y);
 
-    // MAVZU
     ctx.fillStyle = TOPIC_COLOR;
-    ctx.textBaseline = "top";
-    drawAutoFitText(ctx, title, CX, H * (country.topicY || 0.52), maxWidth, 3, TOPIC_SIZE);
+    drawAutoFitText(ctx, title, TOPIC_X, TOPIC_Y, MAX_TEXT_WIDTH, 3, TOPIC_SIZE);
 
-    // SANA
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = `${DATE_SIZE}px Arial`;
     ctx.fillStyle = DATE_COLOR;
-    ctx.fillText(date, W * (country.dateX || 0.33), H * (country.dateY || 0.88));
+    ctx.fillText(date, country.dateX || DATE_X, country.dateY || DATE_Y);
 
     const pngBuffer = canvas.toBuffer("image/png");
     const pdfDoc = await PDFDocument.create();
