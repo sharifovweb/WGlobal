@@ -22,7 +22,9 @@ const CERT_TOKEN = process.env.CERT_BOT_TOKEN;
 const CHANNEL = process.env.CHANNEL || "@kanferensiyasertifikatlari";
 
 if (!EXCEL_TOKEN || !CERT_TOKEN) {
-  console.error("❌ EXCEL_BOT_TOKEN yoki CERT_BOT_TOKEN topilmadi! .env faylni tekshiring.");
+  console.error(
+    "❌ EXCEL_BOT_TOKEN yoki CERT_BOT_TOKEN topilmadi! .env faylni tekshiring.",
+  );
   process.exit(1);
 }
 
@@ -44,24 +46,24 @@ excelBot.command("start", (ctx) => {
   const name = ctx.from.first_name || "Foydalanuvchi";
   ctx.reply(
     `👋 Salom, *${name}*!\n\n` +
-    `📊 Men konferensiya maqolalarini *Excel* formatiga o'tkazib beraman.\n\n` +
-    `📋 *Qanday foydalanish:*\n` +
-    `wglobalconference.com saytidagi konferensiya URL ini yuboring.\n\n` +
-    `*Misol:*\n` +
-    "`https://wglobalconference.com/ojs/index.php/turkey`",
-    { parse_mode: "Markdown" }
+      `📊 Men konferensiya maqolalarini *Excel* formatiga o'tkazib beraman.\n\n` +
+      `📋 *Qanday foydalanish:*\n` +
+      `wglobalconference.com saytidagi konferensiya URL ini yuboring.\n\n` +
+      `*Misol:*\n` +
+      "`https://wglobalconference.com/ojs/index.php/turkey`",
+    { parse_mode: "Markdown" },
   );
 });
 
 excelBot.command("help", (ctx) => {
   ctx.reply(
     `📖 *Yordam*\n\n` +
-    `1️⃣ wglobalconference.com saytiga kiring\n` +
-    `2️⃣ Konferensiya sahifasining URL ini nusxa oling\n` +
-    `3️⃣ Shu botga yuboring\n` +
-    `4️⃣ Excel fayl qaytariladi\n\n` +
-    `*Excel faylida:* №, Sarlavha, Muallif(lar), Betlar, Link`,
-    { parse_mode: "Markdown" }
+      `1️⃣ wglobalconference.com saytiga kiring\n` +
+      `2️⃣ Konferensiya sahifasining URL ini nusxa oling\n` +
+      `3️⃣ Shu botga yuboring\n` +
+      `4️⃣ Excel fayl qaytariladi\n\n` +
+      `*Excel faylida:* №, Sarlavha, Muallif(lar), Betlar, Link`,
+    { parse_mode: "Markdown" },
   );
 });
 
@@ -74,14 +76,14 @@ excelBot.on("text", async (ctx) => {
   if (!text.startsWith("http")) {
     return ctx.reply(
       `❌ Noto'g'ri format. To'liq URL yuboring.\n\n*Misol:*\n\`https://wglobalconference.com/ojs/index.php/turkey\``,
-      { parse_mode: "Markdown" }
+      { parse_mode: "Markdown" },
     );
   }
 
   if (!isValidConferenceUrl(text)) {
     return ctx.reply(
       `⛔ Faqat *wglobalconference.com* saytidagi linklar qabul qilinadi.`,
-      { parse_mode: "Markdown" }
+      { parse_mode: "Markdown" },
     );
   }
 
@@ -92,7 +94,7 @@ excelBot.on("text", async (ctx) => {
   excelSessions.add(chatId);
   const statusMsg = await ctx.reply(
     `🔍 Sahifa tekshirilmoqda...\n\n🔗 \`${text}\``,
-    { parse_mode: "Markdown" }
+    { parse_mode: "Markdown" },
   );
 
   let excelPath = null;
@@ -105,9 +107,11 @@ excelBot.on("text", async (ctx) => {
         const bar = "█".repeat(filled) + "░".repeat(10 - filled);
         try {
           await ctx.telegram.editMessageText(
-            chatId, statusMsg.message_id, null,
+            chatId,
+            statusMsg.message_id,
+            null,
             `📥 Maqolalar yuklanmoqda...\n\n[${bar}] ${percent}%\n✅ ${current} / ${total}\n\n📄 *${title.slice(0, 50)}${title.length > 50 ? "..." : ""}*`,
-            { parse_mode: "Markdown" }
+            { parse_mode: "Markdown" },
           );
         } catch (_) {}
       }
@@ -116,22 +120,28 @@ excelBot.on("text", async (ctx) => {
     const articles = await scrapeConference(text, onProgress);
 
     await ctx.telegram.editMessageText(
-      chatId, statusMsg.message_id, null,
-      `⚙️ Excel fayl tayyorlanmoqda... (${articles.length} ta maqola)`
+      chatId,
+      statusMsg.message_id,
+      null,
+      `⚙️ Excel fayl tayyorlanmoqda... (${articles.length} ta maqola)`,
     );
 
     excelPath = await generateExcel(articles, text);
 
     await ctx.replyWithDocument(
-      { source: excelPath, filename: `conference_maqolalar_${Date.now()}.xlsx` },
       {
-        caption:
-          `✅ *Tayyor!*\n\n📊 Jami: *${articles.length}* ta maqola\n🔗 Manba: \`${text}\``,
+        source: excelPath,
+        filename: `conference_maqolalar_${Date.now()}.xlsx`,
+      },
+      {
+        caption: `✅ *Tayyor!*\n\n📊 Jami: *${articles.length}* ta maqola\n🔗 Manba: \`${text}\``,
         parse_mode: "Markdown",
-      }
+      },
     );
 
-    await ctx.telegram.deleteMessage(chatId, statusMsg.message_id).catch(() => {});
+    await ctx.telegram
+      .deleteMessage(chatId, statusMsg.message_id)
+      .catch(() => {});
   } catch (err) {
     console.error(`Excel scraping xato:`, err.message);
     let msg = `❌ Xatolik yuz berdi.\n\n`;
@@ -142,7 +152,9 @@ excelBot.on("text", async (ctx) => {
     } else {
       msg += `🛠 Texnik xato: ${err.message.slice(0, 100)}`;
     }
-    await ctx.telegram.editMessageText(chatId, statusMsg.message_id, null, msg).catch(() => ctx.reply(msg));
+    await ctx.telegram
+      .editMessageText(chatId, statusMsg.message_id, null, msg)
+      .catch(() => ctx.reply(msg));
   } finally {
     if (excelPath) deleteExcel(excelPath);
     excelSessions.delete(chatId);
@@ -162,9 +174,12 @@ function getTodayDate() {
 }
 
 function countryKeyboard() {
-  const buttons = COUNTRIES.map((c, i) => Markup.button.callback(c.label, `country_${i}`));
+  const buttons = COUNTRIES.map((c, i) =>
+    Markup.button.callback(c.label, `country_${i}`),
+  );
   const rows = [];
-  for (let i = 0; i < buttons.length; i += 2) rows.push(buttons.slice(i, i + 2));
+  for (let i = 0; i < buttons.length; i += 2)
+    rows.push(buttons.slice(i, i + 2));
   return Markup.inlineKeyboard(rows);
 }
 
@@ -172,10 +187,10 @@ certBot.command("start", (ctx) => {
   const name = ctx.from.first_name || "Foydalanuvchi";
   ctx.reply(
     `👋 Salom, *${name}*!\n\n` +
-    `🎓 Men maqola havolasini yuborgan foydalanuvchiga *sertifikat* tayyorlab beraman.\n\n` +
-    `📋 *Qanday foydalanish:*\n` +
-    `Maqola URL ini yuboring — sertifikat avtomatik tayyorlanadi.`,
-    { parse_mode: "Markdown" }
+      `🎓 Men maqola havolasini yuborgan foydalanuvchiga *sertifikat* tayyorlab beraman.\n\n` +
+      `📋 *Qanday foydalanish:*\n` +
+      `Maqola URL ini yuboring — sertifikat avtomatik tayyorlanadi.`,
+    { parse_mode: "Markdown" },
   );
 });
 
@@ -192,7 +207,9 @@ certBot.on("text", async (ctx) => {
       certSessions[userId].step = "country";
       await ctx.reply("🌍 Davlatni tanlang:", countryKeyboard());
     } else {
-      ctx.reply("⚠️ Iltimos, sana kiriting (masalan: 15.03.2026) yoki tugmani bosing.");
+      ctx.reply(
+        "⚠️ Iltimos, sana kiriting (masalan: 15.03.2026) yoki tugmani bosing.",
+      );
     }
     return;
   }
@@ -202,7 +219,9 @@ certBot.on("text", async (ctx) => {
     return ctx.reply("⚠️ Iltimos, https:// bilan boshlanadigan URL yuboring.");
   }
 
-  await ctx.reply(`⏳ ${urls.length > 1 ? urls.length + " ta link" : "Ma'lumot"} olinmoqda...`);
+  await ctx.reply(
+    `⏳ ${urls.length > 1 ? urls.length + " ta link" : "Ma'lumot"} olinmoqda...`,
+  );
 
   let preview = urls.length > 1 ? `✅ ${urls.length} ta link topildi:\n\n` : "";
   for (let i = 0; i < urls.length; i++) {
@@ -212,7 +231,8 @@ certBot.on("text", async (ctx) => {
         ? `${i + 1}. 👥 ${info.authors.join(", ")}\n   📄 ${info.title}\n\n`
         : `${i + 1}. ❌ Ma'lumot olinmadi\n\n`;
     } else if (info) {
-      preview = `✅ Ma'lumot topildi:\n\n` +
+      preview =
+        `✅ Ma'lumot topildi:\n\n` +
         `👥 Muallif(lar): ${info.authors.join(", ")}\n` +
         `📊 Jami: ${info.authors.length} ta muallif\n` +
         `📄 Mavzu: ${info.title}\n\n`;
@@ -227,7 +247,9 @@ certBot.on("text", async (ctx) => {
 
   await ctx.reply(
     preview,
-    Markup.inlineKeyboard([[Markup.button.callback(`📅 Bugun: ${today}`, "date_today")]])
+    Markup.inlineKeyboard([
+      [Markup.button.callback(`📅 Bugun: ${today}`, "date_today")],
+    ]),
   );
 });
 
@@ -245,7 +267,8 @@ certBot.action(/^country_(\d+)$/, async (ctx) => {
   await ctx.answerCbQuery();
   const userId = ctx.from.id;
   const session = certSessions[userId];
-  if (!session) return ctx.reply("⚠️ Sessiya topilmadi. Qaytadan link yuboring.");
+  if (!session)
+    return ctx.reply("⚠️ Sessiya topilmadi. Qaytadan link yuboring.");
 
   const country = COUNTRIES[parseInt(ctx.match[1])];
   if (!country) return ctx.reply("⚠️ Noto'g'ri tanlov.");
@@ -257,26 +280,39 @@ certBot.action(/^country_(\d+)$/, async (ctx) => {
     const url = urls[i];
     const prefix = urls.length > 1 ? `[${i + 1}/${urls.length}] ` : "";
     const info = await getArticleInfo(url);
-    if (!info) { await ctx.reply(`${prefix}❌ Ma'lumot olinmadi: ${url}`); continue; }
+    if (!info) {
+      await ctx.reply(`${prefix}❌ Ma'lumot olinmadi: ${url}`);
+      continue;
+    }
 
     if (info.authors.length > 1) {
-      await ctx.reply(`👥 ${info.authors.length} ta muallif topildi, har biriga sertifikat tayyorlanmoqda...`);
+      await ctx.reply(
+        `👥 ${info.authors.length} ta muallif topildi, har biriga sertifikat tayyorlanmoqda...`,
+      );
     }
 
     for (const author of info.authors) {
-      const result = await generateCertificate(author, info.title, date, country);
-      if (!result) { await ctx.reply(`❌ Sertifikat yaratilmadi: ${author}`); continue; }
+      const result = await generateCertificate(
+        author,
+        info.title,
+        date,
+        country,
+      );
+      if (!result) {
+        await ctx.reply(`❌ Sertifikat yaratilmadi: ${author}`);
+        continue;
+      }
 
       await ctx.replyWithDocument(
         { source: result.path, filename: `${result.authorName}.pdf` },
-        { caption: `${url}` }
+        { caption: `${url}` },
       );
 
       try {
         await ctx.telegram.sendDocument(
           CHANNEL,
           { source: result.path, filename: `${result.authorName}.pdf` },
-          { caption: `${url}` }
+          { caption: `${url}` },
         );
       } catch (err) {
         console.error("Kanalga yuborishda xato:", err.message);
@@ -295,22 +331,39 @@ certBot.catch((err) => console.error("Sertifikat bot xatosi:", err.message));
 // ISHGA TUSHIRISH
 // ─────────────────────────────────────────────
 function launchBots() {
-  excelBot.launch()
+  excelBot
+    .launch()
     .then(() => console.log("📊 Excel bot ishga tushdi!"))
     .catch((err) => {
       console.error("Excel bot ulanishda xato:", err.message);
       setTimeout(launchBots, 5000);
     });
 
-  certBot.launch()
+  certBot
+    .launch()
     .then(() => console.log("🎓 Sertifikat bot ishga tushdi!"))
     .catch((err) => {
       console.error("Sertifikat bot ulanishda xato:", err.message);
       setTimeout(launchBots, 5000);
     });
 }
-
+// ─────────────────────────────────────────────
+// RAILWAY UCHUN HTTP SERVER
+// ─────────────────────────────────────────────
+const http = require("http");
+http
+  .createServer((req, res) => {
+    res.writeHead(200);
+    res.end("Botlar ishlayapti!");
+  })
+  .listen(process.env.PORT || 3000);
 launchBots();
 
-process.once("SIGINT", () => { excelBot.stop("SIGINT"); certBot.stop("SIGINT"); });
-process.once("SIGTERM", () => { excelBot.stop("SIGTERM"); certBot.stop("SIGTERM"); });
+process.once("SIGINT", () => {
+  excelBot.stop("SIGINT");
+  certBot.stop("SIGINT");
+});
+process.once("SIGTERM", () => {
+  excelBot.stop("SIGTERM");
+  certBot.stop("SIGTERM");
+});
